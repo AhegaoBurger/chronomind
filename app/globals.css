@@ -1,0 +1,254 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 240 10% 3.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 3.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 3.9%;
+    --primary: 160 84% 39%;
+    --primary-foreground: 355.7 100% 97.3%;
+    --secondary: 240 4.8% 95.9%;
+    --secondary-foreground: 240 5.9% 10%;
+    --muted: 240 4.8% 95.9%;
+    --muted-foreground: 240 3.8% 46.1%;
+    --accent: 240 4.8% 95.9%;
+    --accent-foreground: 240 5.9% 10%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 5.9% 90%;
+    --input: 240 5.9% 90%;
+    --ring: 160 84% 39%;
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
+    --card: 240 10% 3.9%;
+    --card-foreground: 0 0% 98%;
+    --popover: 240 10% 3.9%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 160 84% 39%;
+    --primary-foreground: 355.7 100% 97.3%;
+    --secondary: 240 3.7% 15.9%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 240 5% 64.9%;
+    --accent: 240 3.7% 15.9%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+    --ring: 160 84% 39%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Custom styles for react-big-calendar */
+.rbc-calendar {
+  @apply font-sans;
+}
+
+.rbc-toolbar {
+  @apply mb-4;
+}
+
+.rbc-toolbar button {
+  @apply rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground;
+}
+
+.rbc-toolbar button.rbc-active {
+  @apply bg-primary text-primary-foreground hover:bg-primary/90;
+}
+
+.rbc-event {
+  @apply rounded-md border-none shadow-sm;
+  padding: 0 !important;
+  background-color: transparent !important;
+}
+
+.rbc-today {
+  @apply bg-emerald-50 dark:bg-emerald-950/20;
+}
+
+.rbc-off-range-bg {
+  @apply bg-muted/50;
+}
+
+.rbc-header {
+  @apply border-border py-2 font-medium;
+}
+
+.rbc-month-view,
+.rbc-time-view,
+.rbc-agenda-view {
+  @apply rounded-md border-border;
+}
+
+.rbc-day-bg + .rbc-day-bg,
+.rbc-header + .rbc-header,
+.rbc-time-content > * + * > * {
+  @apply border-border;
+}
+
+.rbc-timeslot-group {
+  @apply border-border;
+}
+
+.rbc-time-content {
+  @apply border-border;
+}
+
+.rbc-time-header-content {
+  @apply border-border;
+}
+
+.rbc-time-header.rbc-overflowing {
+  @apply border-border;
+}
+
+.rbc-month-row + .rbc-month-row {
+  @apply border-border;
+}
+
+.rbc-day-bg + .rbc-day-bg {
+  @apply border-border;
+}
+
+.rbc-time-header-gutter {
+  @apply border-border;
+}
+
+.rbc-time-gutter {
+  @apply text-xs font-medium text-muted-foreground;
+}
+
+.rbc-day-slot .rbc-time-slot {
+  @apply border-border border-opacity-30;
+}
+
+.rbc-time-view {
+  @apply border-border;
+}
+
+.rbc-current-time-indicator {
+  @apply bg-primary;
+}
+
+.rbc-agenda-view table.rbc-agenda-table {
+  @apply border-border;
+}
+
+.rbc-agenda-view table.rbc-agenda-table tbody > tr > td {
+  @apply border-border;
+}
+
+.rbc-agenda-view table.rbc-agenda-table .rbc-agenda-time-cell {
+  @apply border-border;
+}
+
+.rbc-agenda-view table.rbc-agenda-table thead > tr > th {
+  @apply border-border bg-muted/50 font-medium;
+}
+
+.rbc-row-bg {
+  @apply z-0;
+}
+
+.rbc-row-content {
+  @apply z-10;
+}
+
+.rbc-month-view .rbc-month-header {
+  @apply bg-muted/30;
+}
+
+.rbc-day-slot .rbc-events-container {
+  margin-right: 0 !important;
+}
+
+.rbc-time-view .rbc-header {
+  @apply border-b-0 bg-muted/30;
+}
+
+.rbc-time-view .rbc-allday-cell {
+  @apply border-b border-border;
+}
+
+.rbc-time-view .rbc-time-header-cell .rbc-header {
+  @apply border-b border-border;
+}
+
+.rbc-time-view .rbc-time-header-cell-single-day .rbc-header {
+  @apply border-b-0;
+}
+
+.rbc-time-view .rbc-time-header-gutter {
+  @apply bg-muted/30;
+}
+
+.rbc-time-view .rbc-time-content > * + * > * {
+  @apply border-l border-border;
+}
+
+.rbc-time-view .rbc-day-slot .rbc-time-slot {
+  @apply border-t border-border border-opacity-30;
+}
+
+.rbc-time-view .rbc-timeslot-group {
+  @apply border-b border-border;
+}
+
+.rbc-time-view .rbc-label {
+  @apply px-3 py-1 text-xs font-medium text-muted-foreground;
+}
+
+.rbc-month-view .rbc-date-cell {
+  @apply p-1 text-right;
+}
+
+.rbc-month-view .rbc-date-cell > a {
+  @apply inline-flex h-6 w-6 items-center justify-center rounded-full text-sm font-medium hover:bg-muted;
+}
+
+.rbc-month-view .rbc-date-cell.rbc-now > a {
+  @apply bg-primary text-primary-foreground;
+}
+
+.rbc-month-view .rbc-row-segment {
+  @apply px-1;
+}
+
+.rbc-month-view .rbc-row-segment .rbc-event {
+  @apply my-0.5;
+}
+
+.rbc-month-view .rbc-show-more {
+  @apply ml-1 text-xs font-medium text-primary;
+}
+
+.rbc-overlay {
+  @apply rounded-md border border-border bg-background p-2 shadow-md;
+}
+
+.rbc-overlay-header {
+  @apply mb-2 border-b border-border pb-2 text-sm font-medium;
+}
+
+.rbc-agenda-empty {
+  @apply p-8 text-center text-muted-foreground;
+}
