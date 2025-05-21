@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
+import Groq from "groq-sdk";
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -35,8 +36,8 @@ export function AIChat({ open, onOpenChange, onSuggestionAccept, activities }: A
   ])
   const [input, setInput] = useState("")
   const [isLoading, setIsLoading] = useState(false)
-  const [showSuggestion, setShowSuggestion] = useState(false)
-  const [suggestedActivity, setSuggestedActivity] = useState<Activity | null>(null)
+    // const [showSuggestion, setShowSuggestion] = useState(false) // Removed as per new logic
+    // const [suggestedActivity, setSuggestedActivity] = useState<Activity | null>(null) // Removed as per new logic
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
@@ -61,118 +62,68 @@ export function AIChat({ open, onOpenChange, onSuggestionAccept, activities }: A
     setInput("")
     setIsLoading(true)
 
-    // Simulate AI response
-    setTimeout(() => {
-      // Check if the message contains keywords related to scheduling
-      const schedulingKeywords = [
-        "schedule",
-        "add",
-        "create",
-        "meeting",
-        "appointment",
-        "workout",
-        "exercise",
-        "study",
-        "class",
-      ]
-
-      const containsSchedulingIntent = schedulingKeywords.some((keyword) => input.toLowerCase().includes(keyword))
-
-      if (containsSchedulingIntent) {
-        // Generate a suggested activity based on the user's message
-        // Find a "free" slot on Wednesday evening
-        const now = new Date()
-        const nextWednesday = new Date(now)
-        nextWednesday.setDate(now.getDate() + ((3 + 7 - now.getDay()) % 7)) // Next Wednesday
-        nextWednesday.setHours(18, 0, 0, 0) // 6:00 PM
-
-        const suggestedEnd = new Date(nextWednesday)
-        suggestedEnd.setHours(19, 0, 0, 0) // 7:00 PM
-
-        let title = "Meeting"
-        if (input.toLowerCase().includes("workout") || input.toLowerCase().includes("exercise")) {
-          title = "Workout Session"
-        } else if (input.toLowerCase().includes("study") || input.toLowerCase().includes("class")) {
-          title = "Study Session"
-        } else if (input.toLowerCase().includes("appointment")) {
-          title = "Appointment"
-        }
-
-        const activity: Activity = {
-          id: Math.random().toString(36).substring(2, 9),
-          title,
-          description: "Suggested by AI assistant",
-          start: nextWednesday,
-          end: suggestedEnd,
-          isRecurring: false,
-          categoryId:
-            input.toLowerCase().includes("workout") || input.toLowerCase().includes("exercise")
-              ? "health"
-              : input.toLowerCase().includes("study") || input.toLowerCase().includes("class")
-                ? "study"
-                : "personal",
-        }
-
-        setSuggestedActivity(activity)
-
-        const assistantMessage: Message = {
-          id: Date.now().toString(),
-          role: "assistant",
-          content: `Of course, I understand your schedule is extremely packed, but I see there is free space on Wednesday evening at ${nextWednesday.toLocaleTimeString(
-            [],
-            { hour: "2-digit", minute: "2-digit" },
-          )} where you would be able to fit in this ${title.toLowerCase()}. Would you like me to add it to your calendar?`,
-          suggestion: {
-            activity,
-            buttons: true,
-          },
-        }
-
-        setMessages((prev) => [...prev, assistantMessage])
-      } else {
-        // Generic response for non-scheduling queries
-        const assistantMessage: Message = {
-          id: Date.now().toString(),
-          role: "assistant",
-          content:
-            "I'm here to help you manage your time effectively. You can ask me to schedule activities, suggest free time slots, or provide time management advice. Looking at your calendar, I notice you have some free time on Wednesday evenings - would you like to schedule something then?",
-        }
-
-        setMessages((prev) => [...prev, assistantMessage])
-      }
-
-      setIsLoading(false)
-    }, 1000)
-  }
-
-  const handleAcceptSuggestion = () => {
-    // Find the last message with a suggestion
-    const lastSuggestionMessage = [...messages].reverse().find((m) => m.suggestion)
-
-    if (lastSuggestionMessage?.suggestion?.activity) {
-      const activity = lastSuggestionMessage.suggestion.activity
-      onSuggestionAccept(activity)
-
-      const acceptMessage: Message = {
+    const apiKey = process.env.GROQ_API_KEY;
+    if (!apiKey) {
+      console.warn(
+        "GROQ_API_KEY is not set. Please create a .env.local file and add your API key. For example: GROQ_API_KEY='your-api-key-here'"
+      );
+      const assistantMessage: Message = {
         id: Date.now().toString(),
         role: "assistant",
-        content: `Great! I've added "${activity.title}" to your calendar for ${activity.start.toLocaleDateString()} at ${activity.start.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}.`,
+        content:
+          "API Key not configured. Please ask the administrator to set the GROQ_API_KEY in the environment variables.",
+      };
+      setMessages((prev) => [...prev, assistantMessage]);
+      setIsLoading(false);
+      return;
+    }
+
+    const groq = new Groq({ apiKey });
+
+    // Prepare messages for Groq API, including history
+    const lastMessages = messages.slice(-3).map((msg) => ({ role: msg.role, content: msg.content }));
+    const groqMessages = [
+      { role: "system", content: "You are a helpful scheduling assistant. You can help users manage their calendar and schedule activities." },
+      ...lastMessages,
+      { role: "user", content: userMessage.content },
+    ];
+
+    try {
+      const completion = await groq.chat.completions.create({
+        messages: groqMessages as any, // Cast because Groq SDK might have stricter type for role
+        model: "llama3-8b-8192",
+      });
+
+      const aiResponseContent = completion.choices[0]?.message?.content;
+      console.log("Groq API Response:", aiResponseContent || "No content");
+
+      const assistantMessage: Message = {
+        id: Date.now().toString(),
+        role: "assistant",
+        content: aiResponseContent || "Sorry, I could not generate a response.",
+      };
+      setMessages((prev) => [...prev, assistantMessage]);
+    } catch (error: any) {
+      console.error("Error calling Groq API:", error);
+      let errorMessage = "Sorry, I encountered an error trying to connect to the AI service.";
+      if (error.message) {
+        errorMessage += ` Details: ${error.message}`;
       }
-
-      setMessages((prev) => [...prev, acceptMessage])
+      const assistantMessage: Message = {
+        id: Date.now().toString(),
+        role: "assistant",
+        content: errorMessage,
+      };
+      setMessages((prev) => [...prev, assistantMessage]);
+    } finally {
+      setIsLoading(false);
     }
   }
 
-  const handleDeclineSuggestion = () => {
-    const declineMessage: Message = {
-      id: Date.now().toString(),
-      role: "assistant",
-      content: "No problem. Is there another time that would work better for you?",
-    }
-
-    setMessages((prev) => [...prev, declineMessage])
-    setShowSuggestion(false)
-  }
+  // Removing old suggestion handlers as AI will provide suggestions in text.
+  // These can be re-added or adapted if structured suggestions are needed later.
+  // const handleAcceptSuggestion = () => { ... }
+  // const handleDeclineSuggestion = () => { ... }
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -193,8 +144,8 @@ export function AIChat({ open, onOpenChange, onSuggestionAccept, activities }: A
                   }`}
                 >
                   <div>{message.content}</div>
-
-                  {message.suggestion && message.suggestion.buttons && (
+                  {/* Suggestion buttons are removed for now, AI will provide text-based suggestions */}
+                  {/* {message.suggestion && message.suggestion.buttons && (
                     <div className="mt-3 flex gap-2">
                       <Button size="sm" onClick={() => handleAcceptSuggestion()} className="w-full">
                         Add to Calendar
@@ -203,7 +154,7 @@ export function AIChat({ open, onOpenChange, onSuggestionAccept, activities }: A
                         No Thanks
                       </Button>
                     </div>
-                  )}
+                  )} */}
                 </div>
               </div>
             ))}

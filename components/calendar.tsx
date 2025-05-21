@@ -3,6 +3,9 @@
 import { useState, useMemo } from "react"
 import { Calendar as BigCalendar, dateFnsLocalizer } from "react-big-calendar"
 import "react-big-calendar/lib/css/react-big-calendar.css"
+import { Button } from "@/components/ui/button"
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
+import { ChevronLeft, ChevronRight } from "lucide-react"
 import format from "date-fns/format"
 import parse from "date-fns/parse"
 import startOfWeek from "date-fns/startOfWeek"
@@ -372,37 +375,39 @@ export function Calendar({ onActivityClick, categories = defaultCategories, acti
         <Tooltip>
           <TooltipTrigger asChild>
             <div
-              className="h-full w-full overflow-hidden rounded-md px-2 py-1"
+              className="h-full w-full overflow-hidden rounded-md px-2 py-1 text-sm" // Added text-sm for consistency
               style={{ backgroundColor: event.resource.categoryColor }}
             >
-              <div className="flex items-center gap-1 text-white">
-                <span className="font-medium truncate">{event.title}</span>
-                {event.isRecurring && <RepeatIcon className="h-3 w-3 opacity-75" />}
+              <div className="flex items-center gap-1.5 text-white"> {/* Increased gap slightly */}
+                <span className="font-semibold truncate">{event.title}</span> {/* Changed to font-semibold */}
+                {event.isRecurring && <RepeatIcon className="h-3.5 w-3.5 opacity-80" />} {/* Slightly larger icon and opacity */}
               </div>
             </div>
           </TooltipTrigger>
-          <TooltipContent side="right" className="max-w-xs">
-            <div className="space-y-2">
-              <div className="font-semibold">{event.title}</div>
+          <TooltipContent side="right" className="max-w-xs bg-card border-border p-3"> {/* Added bg-card, border, and padding */}
+            <div className="space-y-1.5"> {/* Reduced space-y slightly */}
+              <div className="font-semibold text-base">{event.title}</div> {/* Increased font size for title */}
               {event.resource.categoryName && (
-                <div className="flex items-center text-xs">
+                <div className="flex items-center text-xs text-muted-foreground"> {/* Used text-muted-foreground */}
                   <div
-                    className="mr-1.5 h-2 w-2 rounded-full"
+                    className="mr-2 h-2.5 w-2.5 rounded-full" /* Slightly larger dot and margin */
                     style={{ backgroundColor: event.resource.categoryColor }}
                   />
                   {event.resource.categoryName}
                 </div>
               )}
-              <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
-                <Clock className="h-3 w-3" />
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground"> {/* Used text-muted-foreground, increased gap */}
+                <Clock className="h-3.5 w-3.5" /> {/* Slightly larger icon */}
                 <span>
-                  {format(event.start, "h:mm a")} - {format(event.end, "h:mm a")}
+                  {format(event.start, "p")} - {format(event.end, "p")} {/* Using short time format 'p' */}
                 </span>
               </div>
-              {event.description && <div className="text-xs text-gray-600 dark:text-gray-300">{event.description}</div>}
+              {event.description && (
+                <div className="text-xs text-foreground/80 py-1">{event.description}</div> /* Used foreground opacity, added padding */
+              )}
               {event.isRecurring && (
-                <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
-                  <RepeatIcon className="h-3 w-3" />
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground"> {/* Used text-muted-foreground, increased gap */}
+                  <RepeatIcon className="h-3.5 w-3.5" /> {/* Slightly larger icon */}
                   <span>Recurring event</span>
                 </div>
               )}
@@ -435,55 +440,20 @@ export function Calendar({ onActivityClick, categories = defaultCategories, acti
     ]
 
     return (
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+      <div className="mb-4 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
         <div className="flex items-center gap-2">
-          <button
-            onClick={goToToday}
-            className="inline-flex items-center justify-center rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground shadow-sm hover:bg-primary/90"
-          >
+          <Button onClick={goToToday} variant="outline">
             Today
-          </button>
-          <div className="flex items-center rounded-md border">
-            <button
-              onClick={goToPrev}
-              className="inline-flex h-8 w-8 items-center justify-center rounded-l-md border-r hover:bg-muted"
-            >
-              <span className="sr-only">Previous</span>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="m15 18-6-6 6-6" />
-              </svg>
-            </button>
-            <button
-              onClick={goToNext}
-              className="inline-flex h-8 w-8 items-center justify-center rounded-r-md hover:bg-muted"
-            >
-              <span className="sr-only">Next</span>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="m9 18 6-6-6-6" />
-              </svg>
-            </button>
+          </Button>
+          <div className="flex items-center">
+            <Button onClick={goToPrev} variant="outline" size="icon" aria-label="Previous period">
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <Button onClick={goToNext} variant="outline" size="icon" aria-label="Next period" className="ml-[-1px] rounded-l-none">
+              <ChevronRight className="h-4 w-4" />
+            </Button>
           </div>
-          <h2 className="text-lg font-semibold">
+          <h2 className="text-lg font-semibold sm:text-xl">
             <span className="flex items-center gap-2">
               <CalendarIcon className="h-5 w-5 text-muted-foreground" />
               {toolbar.label}
@@ -491,19 +461,25 @@ export function Calendar({ onActivityClick, categories = defaultCategories, acti
           </h2>
         </div>
 
-        <div className="flex items-center rounded-md border">
+        <ToggleGroup
+          type="single"
+          value={toolbar.view}
+          onValueChange={(value) => {
+            if (value) toolbar.onView(value)
+          }}
+          aria-label="Calendar view"
+        >
           {viewOptions.map((viewOption) => (
-            <button
+            <ToggleGroupItem
               key={viewOption.key}
-              onClick={() => toolbar.onView(viewOption.key)}
-              className={`px-3 py-1.5 text-sm font-medium ${
-                toolbar.view === viewOption.key ? "bg-primary text-primary-foreground" : "hover:bg-muted"
-              } ${viewOption.key !== viewOptions[viewOptions.length - 1].key ? "border-r" : ""}`}
+              value={viewOption.key}
+              aria-label={viewOption.label}
+              className="px-3 py-1.5"
             >
               {viewOption.label}
-            </button>
+            </ToggleGroupItem>
           ))}
-        </div>
+        </ToggleGroup>
       </div>
     )
   }
