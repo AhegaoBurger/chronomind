@@ -61,6 +61,38 @@ This is a Next.js application designed to be an intelligent time management assi
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-## Model Context Protocol (Future)
+## Model Context Protocol (MCP) Server
 
-We are currently designing a Model Context Protocol to allow the AI to have a better understanding of your calendar, tasks, and preferences. This will enable more personalized and effective assistance. The initial specification will focus on an API endpoint to provide this contextual data to the AI.
+This project includes a basic implementation of a Model Context Protocol (MCP) server, located in the `mcp-server/` directory. This server uses the official `@modelcontextprotocol/sdk` to expose user calendar data and scheduling tools according to the MCP standard.
+
+This allows AI models and clients that support MCP (like certain configurations of Claude Desktop or local LLM clients) to interact with this application's data in a standardized way.
+
+### Building and Running the MCP Server
+
+1.  **Navigate to the server directory:**
+    ```bash
+    cd mcp-server
+    ```
+2.  **Install dependencies** (if you haven't already):
+    ```bash
+    pnpm install
+    ```
+3.  **Build the server** (compile TypeScript to JavaScript):
+    ```bash
+    pnpm run build
+    ```
+    This will create a `build/` directory with the compiled code.
+4.  **Run the server:**
+    ```bash
+    node build/index.js
+    ```
+    The server will then be active and waiting for an MCP client to connect via stdio.
+
+For more detailed information on the server's capabilities, exposed resources, and tools, please refer to the [MCP Server Details documentation](./docs/MCP_SERVER_DETAILS.md).
+
+### Integration with MCP Clients
+
+To integrate this server with an MCP client (e.g., Claude Desktop), you would typically configure the client's "Model Context" settings to use a custom command. The command should be the one used to run the server, for example:
+`node /path/to/your/project/mcp-server/build/index.js`
+(Ensure you replace `/path/to/your/project/` with the actual absolute path to where you've cloned this repository).
+The client will then communicate with the server over standard input/output.
