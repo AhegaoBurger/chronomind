@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
-import Groq from "groq-sdk";
+// import Groq from "groq-sdk"; // Removed
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -58,61 +58,51 @@ export function AIChat({ open, onOpenChange, onSuggestionAccept, activities }: A
       content: input,
     }
 
-    setMessages((prev) => [...prev, userMessage])
-    setInput("")
-    setIsLoading(true)
+    // Capture history before adding the new user message
+    const chatHistory = messages.slice(-3).map(msg => ({ role: msg.role, content: msg.content }));
 
-    const apiKey = process.env.GROQ_API_KEY;
-    if (!apiKey) {
-      console.warn(
-        "GROQ_API_KEY is not set. Please create a .env.local file and add your API key. For example: GROQ_API_KEY='your-api-key-here'"
-      );
-      const assistantMessage: Message = {
-        id: Date.now().toString(),
-        role: "assistant",
-        content:
-          "API Key not configured. Please ask the administrator to set the GROQ_API_KEY in the environment variables.",
-      };
-      setMessages((prev) => [...prev, assistantMessage]);
-      setIsLoading(false);
-      return;
-    }
-
-    const groq = new Groq({ apiKey });
-
-    // Prepare messages for Groq API, including history
-    const lastMessages = messages.slice(-3).map((msg) => ({ role: msg.role, content: msg.content }));
-    const groqMessages = [
-      { role: "system", content: "You are a helpful scheduling assistant. You can help users manage their calendar and schedule activities." },
-      ...lastMessages,
-      { role: "user", content: userMessage.content },
-    ];
+    setMessages((prev) => [...prev, userMessage]);
+    setInput(""); // Clear input after message is sent
+    setIsLoading(true);
 
     try {
-      const completion = await groq.chat.completions.create({
-        messages: groqMessages as any, // Cast because Groq SDK might have stricter type for role
-        model: "llama3-8b-8192",
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: userMessage.content, // Use userMessage.content as input is cleared
+          history: chatHistory,
+        }),
       });
 
-      const aiResponseContent = completion.choices[0]?.message?.content;
-      console.log("Groq API Response:", aiResponseContent || "No content");
+      let assistantMessage: Message;
 
-      const assistantMessage: Message = {
-        id: Date.now().toString(),
-        role: "assistant",
-        content: aiResponseContent || "Sorry, I could not generate a response.",
-      };
-      setMessages((prev) => [...prev, assistantMessage]);
-    } catch (error: any) {
-      console.error("Error calling Groq API:", error);
-      let errorMessage = "Sorry, I encountered an error trying to connect to the AI service.";
-      if (error.message) {
-        errorMessage += ` Details: ${error.message}`;
+      if (response.ok) {
+        const data = await response.json();
+        assistantMessage = {
+          id: Date.now().toString(),
+          role: "assistant",
+          content: data.response || "Sorry, I received an empty response.",
+        };
+      } else {
+        const errorData = await response.json().catch(() => ({})); // Try to parse error, default to empty obj
+        console.error("Error calling /api/chat:", response.status, response.statusText, errorData);
+        assistantMessage = {
+          id: Date.now().toString(),
+          role: "assistant",
+          content: `Sorry, I couldn't connect to the AI assistant. Error: ${response.statusText || 'Unknown error'}`,
+        };
       }
+      setMessages((prev) => [...prev, assistantMessage]);
+
+    } catch (error) {
+      console.error("Fetch error in handleSend:", error);
       const assistantMessage: Message = {
         id: Date.now().toString(),
         role: "assistant",
-        content: errorMessage,
+        content: "Sorry, there was an issue reaching the AI assistant. Please check your connection and try again.",
       };
       setMessages((prev) => [...prev, assistantMessage]);
     } finally {
