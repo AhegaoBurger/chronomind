@@ -27,7 +27,27 @@ export async function POST(req: NextRequest) {
 
     const systemPrompt: ChatMessage = {
       role: "system",
-      content: "You are a helpful scheduling assistant. You can help users manage their calendar and schedule activities."
+      content: `You are a helpful scheduling assistant. You can help users manage their calendar and schedule activities.
+If you suggest creating a calendar event, include the event details in a JSON block within your response.
+The JSON block should start with \`\`\`json and end with \`\`\`.
+The JSON should include:
+- title: string (required)
+- description: string (optional)
+- start: string (ISO 8601 format, required)
+- end: string (ISO 8601 format, required)
+- categoryId: string (e.g., "work", "personal", "health", "social", "finance", "education", "travel", "hobbies", "family", "other")
+Example:
+"Okay, I can help you schedule that.
+\`\`\`json
+{
+  "title": "Team Meeting",
+  "description": "Discuss project updates",
+  "start": "2024-07-15T10:00:00Z",
+  "end": "2024-07-15T11:00:00Z",
+  "categoryId": "work"
+}
+\`\`\`"
+`
     };
 
     const groqMessages: ChatMessage[] = [
@@ -42,7 +62,45 @@ export async function POST(req: NextRequest) {
     });
 
     const aiContent = completion.choices[0]?.message?.content || "Sorry, I could not generate a response.";
-    return NextResponse.json({ response: aiContent });
+
+    // Attempt to extract and process suggested activity
+    const jsonBlockRegex = /```json\s*([\s\S]*?)\s*```/;
+    const match = aiContent.match(jsonBlockRegex);
+    let suggestedActivity = null;
+
+    if (match && match[1]) {
+      try {
+        const parsedJson = JSON.parse(match[1]);
+        if (parsedJson.title && parsedJson.start && parsedJson.end && parsedJson.categoryId) {
+          const startDate = new Date(parsedJson.start);
+          const endDate = new Date(parsedJson.end);
+
+          // Check if dates are valid
+          if (!isNaN(startDate.getTime()) && !isNaN(endDate.getTime())) {
+            suggestedActivity = {
+              title: parsedJson.title,
+              description: parsedJson.description || null, // Optional
+              start: startDate,
+              end: endDate,
+              categoryId: parsedJson.categoryId,
+            };
+          } else {
+            console.warn("Invalid date format in suggested activity:", parsedJson.start, parsedJson.end);
+          }
+        } else {
+          console.warn("Missing required fields in suggested activity JSON:", parsedJson);
+        }
+      } catch (jsonError) {
+        console.error("Error parsing JSON from AI response:", jsonError);
+      }
+    }
+
+    const responsePayload: { response: string; suggestedActivity?: any } = { response: aiContent };
+    if (suggestedActivity) {
+      responsePayload.suggestedActivity = suggestedActivity;
+    }
+
+    return NextResponse.json(responsePayload);
 
   } catch (error) {
     console.error('Error in /api/chat route:', error);

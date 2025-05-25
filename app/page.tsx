@@ -12,6 +12,9 @@ export default function Home() {
             <span className="text-xl font-bold">ChronoMind</span>
           </div>
           <div className="flex items-center gap-4">
+            <Link href="/dashboard">
+              <Button variant="outline">Dashboard</Button>
+            </Link>
             <Link href="/login">
               <Button variant="ghost">Login</Button>
             </Link>
@@ -31,10 +34,15 @@ export default function Home() {
               ChronoMind helps you organize your schedule, manage recurring activities, and gain insights into better
               time utilization through an intelligent AI assistant.
             </p>
-            <div className="mt-10">
+            <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
               <Link href="/signup">
                 <Button size="lg" className="gap-2">
                   Get Started <ArrowRight className="h-4 w-4" />
+                </Button>
+              </Link>
+              <Link href="/dashboard">
+                <Button size="lg" variant="outline" className="gap-2">
+                  View Dashboard <ArrowRight className="h-4 w-4" />
                 </Button>
               </Link>
             </div>
@@ -77,9 +85,14 @@ export default function Home() {
               <p className="mt-4 text-gray-600 dark:text-gray-400">
                 Join ChronoMind today and start managing your schedule more effectively with AI assistance.
               </p>
-              <div className="mt-8">
+              <div className="mt-8 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
                 <Link href="/signup">
                   <Button size="lg">Create Your Account</Button>
+                </Link>
+                <Link href="/dashboard">
+                  <Button size="lg" variant="outline">
+                    Access Your Dashboard
+                  </Button>
                 </Link>
               </div>
             </div>

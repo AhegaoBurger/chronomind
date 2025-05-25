@@ -164,4 +164,13 @@ export const sampleActivities: Activity[] = [
       until: null, // Never ends
     },
   },
+  {
+    id: "13",
+    title: "Submit Project Proposal",
+    description: "Finalize and submit Q3 project proposal",
+    start: new Date(2025, 4, 19, 16, 0), // May 19, 2025, 4:00 PM
+    end: new Date(2025, 4, 19, 17, 0),
+    isRecurring: false,
+    categoryId: "work",
+  },
 ]
