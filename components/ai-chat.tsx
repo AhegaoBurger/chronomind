@@ -38,6 +38,8 @@ export function AIChat({ open, onOpenChange, onSuggestionAccept, activities }: A
   const [isLoading, setIsLoading] = useState(false)
     // const [showSuggestion, setShowSuggestion] = useState(false) // Removed as per new logic
     // const [suggestedActivity, setSuggestedActivity] = useState<Activity | null>(null) // Removed as per new logic
+  const [currentSuggestion, setCurrentSuggestion] = useState<Activity | null>(null);
+  const [suggestionMessageId, setSuggestionMessageId] = useState<string | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
@@ -81,11 +83,38 @@ export function AIChat({ open, onOpenChange, onSuggestionAccept, activities }: A
 
       if (response.ok) {
         const data = await response.json();
+        const newAssistantMessageId = Date.now().toString();
         assistantMessage = {
-          id: Date.now().toString(),
+          id: newAssistantMessageId,
           role: "assistant",
           content: data.response || "Sorry, I received an empty response.",
         };
+
+        if (data.suggestedActivity) {
+          const { title, start, end, description, categoryId } = data.suggestedActivity;
+          if (title && start && end && categoryId) {
+            // Ensure start and end are Date objects
+            const startDate = typeof start === 'string' ? new Date(start) : start;
+            const endDate = typeof end === 'string' ? new Date(end) : end;
+
+            if (!isNaN(startDate.getTime()) && !isNaN(endDate.getTime())) {
+              setCurrentSuggestion({
+                id: `sugg-${newAssistantMessageId}`, // Create a unique ID for the activity
+                title,
+                start: startDate,
+                end: endDate,
+                description: description || "",
+                categoryId,
+              });
+              setSuggestionMessageId(newAssistantMessageId);
+            } else {
+              console.warn("Received suggestedActivity with invalid date(s):", data.suggestedActivity);
+            }
+          } else {
+            console.warn("Received suggestedActivity with missing required fields:", data.suggestedActivity);
+          }
+        }
+
       } else {
         const errorData = await response.json().catch(() => ({})); // Try to parse error, default to empty obj
         console.error("Error calling /api/chat:", response.status, response.statusText, errorData);
@@ -112,8 +141,18 @@ export function AIChat({ open, onOpenChange, onSuggestionAccept, activities }: A
 
   // Removing old suggestion handlers as AI will provide suggestions in text.
   // These can be re-added or adapted if structured suggestions are needed later.
-  // const handleAcceptSuggestion = () => { ... }
-  // const handleDeclineSuggestion = () => { ... }
+  const handleAcceptSuggestion = () => {
+    if (currentSuggestion) {
+      onSuggestionAccept(currentSuggestion);
+      setCurrentSuggestion(null);
+      setSuggestionMessageId(null);
+    }
+  };
+
+  const handleIgnoreSuggestion = () => {
+    setCurrentSuggestion(null);
+    setSuggestionMessageId(null);
+  };
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -134,17 +173,28 @@ export function AIChat({ open, onOpenChange, onSuggestionAccept, activities }: A
                   }`}
                 >
                   <div>{message.content}</div>
-                  {/* Suggestion buttons are removed for now, AI will provide text-based suggestions */}
-                  {/* {message.suggestion && message.suggestion.buttons && (
-                    <div className="mt-3 flex gap-2">
-                      <Button size="sm" onClick={() => handleAcceptSuggestion()} className="w-full">
-                        Add to Calendar
-                      </Button>
-                      <Button size="sm" variant="outline" onClick={() => handleDeclineSuggestion()} className="w-full">
-                        No Thanks
-                      </Button>
+                  {message.role === "assistant" && message.id === suggestionMessageId && currentSuggestion && (
+                    <div className="mt-3 border-t pt-3">
+                      <p className="text-sm font-medium mb-2">
+                        AI suggests: {currentSuggestion.title}
+                        <br />
+                        <span className="text-xs">
+                          From: {currentSuggestion.start.toLocaleString()}
+                          <br />
+                          To: {currentSuggestion.end.toLocaleString()}
+                        </span>
+                        {currentSuggestion.description && <><br/><span className="text-xs">Details: {currentSuggestion.description}</span></>}
+                      </p>
+                      <div className="flex gap-2 mt-2">
+                        <Button size="sm" onClick={handleAcceptSuggestion} className="w-full bg-green-600 hover:bg-green-700">
+                          Add to Calendar
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={handleIgnoreSuggestion} className="w-full">
+                          Ignore
+                        </Button>
+                      </div>
                     </div>
-                  )} */}
+                  )}
                 </div>
               </div>
             ))}

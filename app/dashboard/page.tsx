@@ -64,12 +64,18 @@ export default function DashboardPage() {
   }
 
   const handleAISuggestion = (activity: Activity) => {
+    // Assign a unique ID to the activity before adding
+    const newActivityWithId = {
+      ...activity,
+      id: `ai-${Date.now().toString()}` // Prefixing to denote AI origin and ensure uniqueness
+    };
+
     // Add the suggested activity to the calendar
-    setActivities([...activities, activity])
+    setActivities([...activities, newActivityWithId])
 
     toast({
-      title: "Activity added",
-      description: `${activity.title} has been added to your calendar.`,
+      title: "Activity added by AI",
+      description: `${newActivityWithId.title} has been added to your calendar.`,
     })
   }
 
